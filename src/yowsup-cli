@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+# coding=utf-8
 '''
 Copyright (c) <2012> Tarek Galal <tare2.galal@gmail.com>
 
@@ -40,7 +40,10 @@ from Yowsup.Registration.v2.existsrequest import WAExistsRequest as WAExistsRequ
 from Yowsup.Registration.v2.coderequest import WACodeRequest as WACodeRequestV2
 from Yowsup.Registration.v2.regrequest import WARegRequest as WARegRequestV2
 
-import threading,time, base64
+import threading, time, base64
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 DEFAULT_CONFIG = os.path.expanduser("~")+"/.yowsup/auth"
 COUNTRIES_CSV = "countries.csv"
@@ -141,6 +144,12 @@ def getCredentials(config = DEFAULT_CONFIG):
 
 	return 0
 
+def getFileContents(pathtofile):
+	f = open(pathtofile)
+	file_contents = f.read().decode("utf-8")
+	f.close()
+	return file_contents
+
 def dissectPhoneNumber(phoneNumber):
 	try:
 		with open(COUNTRIES_CSV, 'rb') as csvfile:
@@ -179,6 +188,7 @@ modes.add_argument('-i','--interactive', help="Start an interactive conversation
 
 
 clientsGroup.add_argument('-w','--wait', help='If used with -s, then connection will not close until server confirms reception of the message', action="store_true", required=False, default=False)
+clientsGroup.add_argument('-f','--file', help='If used with -s, the contents of the message will be read from the filename specified in the <message> parameter', action="store_true", required=False, default=False)
 clientsGroup.add_argument('-a','--autoack', help='If used with -l or -i, then a message received ack would be automatically sent for received messages', action="store_true", required=False, default=False)
 clientsGroup.add_argument('-k','--keepalive', help="When used with -l or -i, Yowsup will automatically respond to server's ping requests to keep connection alive", action="store_true", required=False, default=False)
 
@@ -233,12 +243,12 @@ else:
 
 		if args["interactive"]:
 			val = args["interactive"]
-			wa = WhatsappCmdClient(val, args['keepalive'] ,args['autoack'])
+			wa = WhatsappCmdClient(val, args['keepalive'], args['autoack'])
 			wa.login(login, password)
 		elif args['send']:
 			phone = args["send"][0]
 			message = args["send"][1]
-			wa = WhatsappEchoClient(phone, message, args['wait'])
+			wa = WhatsappEchoClient(phone, str(getFileContents(message)) if args['file'] else message, args['wait'])
 			wa.login(login, password)
 		elif args['listen']:
 			wa = WhatsappListenerClient(args['keepalive'], args['autoack'])
